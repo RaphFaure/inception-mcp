@@ -5,3 +5,9 @@ __pycache__/
 dist/
 *.egg-info/
 .venv/
+# macOS
+.DS_Store
+**/.DS_Store
+
+# LaTeX
+*.tex
