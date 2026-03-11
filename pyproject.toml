@@ -1,0 +1,42 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "inception-mcp"
+version = "0.1.0"
+description = "MCP server and CLI for INCEpTION annotation tool"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { file = "LICENSE" }
+authors = [
+    { name = "Romain Faure" },
+]
+keywords = ["inception", "annotation", "nlp", "mcp", "linguistics"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Text Processing :: Linguistic",
+]
+dependencies = [
+    "mcp>=1.0.0",
+    "requests>=2.28.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/RaphFaure/inception-mcp"
+Repository = "https://github.com/RaphFaure/inception-mcp"
+"Bug Tracker" = "https://github.com/RaphFaure/inception-mcp/issues"
+
+[project.scripts]
+inception-mcp = "inception_mcp.server:main"
+inception-cli = "inception_mcp.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["inception_mcp"]
