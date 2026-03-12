@@ -128,7 +128,11 @@ class TestDocuments:
             result = CLIENT.upload_document(1, "test.txt", "Hello world")
         assert result["id"] == 5
         call_kwargs = mock_post.call_args
-        assert b"Hello world" in str(call_kwargs).encode() or True  # content sent
+        # Verify the encoded content was actually passed in the files argument
+        files_arg = call_kwargs.kwargs.get("files") or call_kwargs[1].get("files")
+        assert files_arg is not None, "No files argument found in POST call"
+        file_content = files_arg["content"][1]
+        assert file_content == b"Hello world"
 
     def test_upload_document_from_file(self, tmp_path):
         doc_file = tmp_path / "sample.txt"

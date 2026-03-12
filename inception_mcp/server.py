@@ -1,16 +1,16 @@
 """
-Serveur MCP pour INCEpTION.
+MCP server for INCEpTION.
 
-Expose les opérations INCEpTION comme outils MCP utilisables par Claude.
+Exposes INCEpTION operations as MCP tools usable by Claude.
 
-Configuration (variables d'environnement) :
-    INCEPTION_URL       URL de base (défaut : http://localhost:8080)
-    INCEPTION_USER      Nom d'utilisateur
-    INCEPTION_PASSWORD  Mot de passe
+Configuration (environment variables):
+    INCEPTION_URL       Base URL (default: http://localhost:8080)
+    INCEPTION_USER      Username
+    INCEPTION_PASSWORD  Password
 
-Lancement :
+Launch:
     python -m inception_mcp.server
-    # ou via uv :
+    # or via uv:
     uv run inception-mcp
 """
 
@@ -26,9 +26,9 @@ from .client import InceptionClient, InceptionError, EXPORT_FORMATS
 mcp = FastMCP(
     name="inception-mcp",
     instructions=(
-        "Outils pour interagir avec un serveur INCEpTION (annotation NLP). "
-        "Permet de gérer les projets, uploader des documents, importer/exporter "
-        "des annotations et des projets complets, et suivre l'avancement."
+        "Tools to interact with an INCEpTION NLP annotation server. "
+        "Manage projects, upload documents, import/export annotations and full projects, "
+        "and track annotation progress."
     ),
 )
 
@@ -47,7 +47,7 @@ def _client() -> InceptionClient:
 
 @mcp.tool()
 def list_projects() -> str:
-    """Liste tous les projets INCEpTION accessibles."""
+    """List all accessible INCEpTION projects."""
     projects = _client().list_projects()
     if not projects:
         return "Aucun projet."
@@ -57,11 +57,11 @@ def list_projects() -> str:
 
 @mcp.tool()
 def create_project(name: str, description: str = "") -> str:
-    """Crée un nouveau projet INCEpTION.
+    """Create a new INCEpTION project.
 
     Args:
-        name: Nom du projet (sans espaces, utiliser underscores).
-        description: Description optionnelle.
+        name: Project name (no spaces; use underscores).
+        description: Optional description.
     """
     p = _client().create_project(name, description)
     return f"Projet créé : [{p['id']}] {p['name']}"
@@ -69,12 +69,12 @@ def create_project(name: str, description: str = "") -> str:
 
 @mcp.tool()
 def delete_project(project_id: int) -> str:
-    """Supprime un projet INCEpTION et tous ses documents.
+    """Delete an INCEpTION project and all its documents.
 
-    ⚠️ Irréversible. Vérifier le project_id avant d'appeler.
+    WARNING: Irreversible. Verify the project_id before calling.
 
     Args:
-        project_id: ID numérique du projet.
+        project_id: Numeric project ID.
     """
     _client().delete_project(project_id)
     return f"Projet [{project_id}] supprimé."
@@ -82,11 +82,11 @@ def delete_project(project_id: int) -> str:
 
 @mcp.tool()
 def export_project_zip(project_id: int, output_path: str) -> str:
-    """Exporte un projet complet (documents + annotations + schéma) en ZIP.
+    """Export a complete project (documents + annotations + schema) as a ZIP file.
 
     Args:
-        project_id: ID du projet.
-        output_path: Chemin de sauvegarde du fichier ZIP.
+        project_id: Project ID.
+        output_path: Path where the ZIP file will be saved.
     """
     content = _client().export_project_zip(project_id)
     Path(output_path).write_bytes(content)
@@ -95,10 +95,10 @@ def export_project_zip(project_id: int, output_path: str) -> str:
 
 @mcp.tool()
 def import_project_zip(zip_path: str) -> str:
-    """Importe un projet depuis un fichier ZIP exporté par INCEpTION.
+    """Import a project from a ZIP file exported by INCEpTION.
 
     Args:
-        zip_path: Chemin absolu vers le fichier ZIP.
+        zip_path: Absolute path to the ZIP file.
     """
     p = _client().import_project_zip(Path(zip_path))
     return f"Projet importé : [{p['id']}] {p['name']}"
@@ -106,10 +106,10 @@ def import_project_zip(zip_path: str) -> str:
 
 @mcp.tool()
 def project_status(project_id: int) -> str:
-    """Retourne l'état d'avancement d'un projet : documents et annotations par utilisateur.
+    """Return the annotation progress of a project: documents and per-user annotation states.
 
     Args:
-        project_id: ID du projet.
+        project_id: Project ID.
     """
     status = _client().project_status(project_id)
     lines = [f"Projet [{project_id}] — {status['n_documents']} document(s)\n"]
@@ -128,10 +128,10 @@ def project_status(project_id: int) -> str:
 
 @mcp.tool()
 def list_documents(project_id: int) -> str:
-    """Liste les documents d'un projet.
+    """List the documents in a project.
 
     Args:
-        project_id: ID du projet.
+        project_id: Project ID.
     """
     docs = _client().list_documents(project_id)
     if not docs:
@@ -142,12 +142,12 @@ def list_documents(project_id: int) -> str:
 
 @mcp.tool()
 def upload_document(project_id: int, file_path: str, fmt: str = "text") -> str:
-    """Upload un document dans un projet INCEpTION.
+    """Upload a document to an INCEpTION project.
 
     Args:
-        project_id: ID du projet cible.
-        file_path: Chemin absolu vers le fichier à uploader.
-        fmt: Format du document. Valeurs courantes : text, conllu, xmi, ctsv3.
+        project_id: Target project ID.
+        file_path: Absolute path to the file to upload.
+        fmt: Document format. Common values: text, conllu, xmi, ctsv3.
     """
     path = Path(file_path)
     if not path.exists():
@@ -158,13 +158,13 @@ def upload_document(project_id: int, file_path: str, fmt: str = "text") -> str:
 
 @mcp.tool()
 def batch_upload(project_id: int, folder_path: str, fmt: str = "text", glob: str = "*") -> str:
-    """Uploade tous les fichiers d'un dossier dans un projet INCEpTION.
+    """Upload all files from a folder into an INCEpTION project.
 
     Args:
-        project_id: ID du projet cible.
-        folder_path: Chemin absolu du dossier contenant les fichiers.
-        fmt: Format des documents (text, conllu, xmi, ctsv3).
-        glob: Pattern de sélection des fichiers (ex: "*.txt"). Défaut : tous.
+        project_id: Target project ID.
+        folder_path: Absolute path to the folder containing the files.
+        fmt: Document format (text, conllu, xmi, ctsv3).
+        glob: File selection pattern (e.g. "*.txt"). Default: all files.
     """
     folder = Path(folder_path)
     if not folder.is_dir():
@@ -180,14 +180,16 @@ def batch_upload(project_id: int, folder_path: str, fmt: str = "text", glob: str
 def export_document_source(
     project_id: int, document_id: int, output_path: str, fmt: str = "text"
 ) -> str:
-    """Exporte le contenu source d'un document.
+    """Export the source content of a document.
 
     Args:
-        project_id: ID du projet.
-        document_id: ID du document.
-        output_path: Chemin de sauvegarde.
-        fmt: Format d'export (text, conllu, xmi…).
+        project_id: Project ID.
+        document_id: Document ID.
+        output_path: Path where the file will be saved.
+        fmt: Export format (text, conllu, xmi, …).
     """
+    if fmt not in EXPORT_FORMATS:
+        return f"Invalid format '{fmt}'. Accepted values: {', '.join(EXPORT_FORMATS)}"
     content = _client().export_document_source(project_id, document_id, fmt)
     Path(output_path).write_bytes(content)
     return f"Document [{document_id}] exporté → {output_path} ({len(content)} octets)"
@@ -195,13 +197,13 @@ def export_document_source(
 
 @mcp.tool()
 def delete_document(project_id: int, document_id: int) -> str:
-    """Supprime un document d'un projet.
+    """Delete a document from a project.
 
-    ⚠️ Irréversible.
+    WARNING: Irreversible.
 
     Args:
-        project_id: ID du projet.
-        document_id: ID du document.
+        project_id: Project ID.
+        document_id: Document ID.
     """
     _client().delete_document(project_id, document_id)
     return f"Document [{document_id}] supprimé du projet [{project_id}]."
@@ -213,11 +215,11 @@ def delete_document(project_id: int, document_id: int) -> str:
 
 @mcp.tool()
 def list_annotations(project_id: int, document_id: int) -> str:
-    """Liste les annotations existantes sur un document (par utilisateur).
+    """List existing annotations on a document, grouped by user.
 
     Args:
-        project_id: ID du projet.
-        document_id: ID du document.
+        project_id: Project ID.
+        document_id: Document ID.
     """
     annots = _client().list_annotations(project_id, document_id)
     if not annots:
@@ -234,15 +236,17 @@ def export_annotations(
     fmt: str = "ctsv3",
     output_path: str = "",
 ) -> str:
-    """Exporte les annotations d'un document vers un fichier.
+    """Export the annotations of a document to a file.
 
     Args:
-        project_id: ID du projet.
-        document_id: ID du document.
-        user: Nom de l'annotateur.
-        fmt: Format d'export (ctsv3, xmi, conllu, text, jsoncas, nif, tcf).
-        output_path: Chemin de sauvegarde (optionnel). Si vide, retourne le contenu texte.
+        project_id: Project ID.
+        document_id: Document ID.
+        user: Annotator username.
+        fmt: Export format (ctsv3, xmi, conllu, text, jsoncas, nif, tcf).
+        output_path: Save path (optional). If empty, returns the content as text.
     """
+    if fmt not in EXPORT_FORMATS:
+        return f"Invalid format '{fmt}'. Accepted values: {', '.join(EXPORT_FORMATS)}"
     content = _client().export_annotations(project_id, document_id, user, fmt)
     if output_path:
         Path(output_path).write_bytes(content)
@@ -260,14 +264,16 @@ def export_all_annotations(
     output_dir: str,
     fmt: str = "ctsv3",
 ) -> str:
-    """Exporte les annotations de tous les documents d'un projet vers un dossier.
+    """Export annotations for all documents in a project to a folder.
 
     Args:
-        project_id: ID du projet.
-        user: Nom de l'annotateur.
-        output_dir: Dossier de destination (créé si absent).
-        fmt: Format d'export (ctsv3, xmi, conllu…).
+        project_id: Project ID.
+        user: Annotator username.
+        output_dir: Destination folder (created if it does not exist).
+        fmt: Export format (ctsv3, xmi, conllu, …).
     """
+    if fmt not in EXPORT_FORMATS:
+        return f"Invalid format '{fmt}'. Accepted values: {', '.join(EXPORT_FORMATS)}"
     results = _client().export_all_annotations(project_id, user, Path(output_dir), fmt)
     ok = [r for r in results if r["ok"]]
     errors = [r for r in results if not r["ok"]]
@@ -288,15 +294,15 @@ def import_annotations(
     fmt: str = "ctsv3",
     state: str = "IN_PROGRESS",
 ) -> str:
-    """Importe des annotations depuis un fichier pour un utilisateur sur un document.
+    """Import annotations from a file for a user on a document.
 
     Args:
-        project_id: ID du projet.
-        document_id: ID du document.
-        user: Nom de l'annotateur cible.
-        file_path: Chemin du fichier d'annotations.
-        fmt: Format du fichier (ctsv3, xmi, conllu…).
-        state: État d'annotation après import (IN_PROGRESS, COMPLETE).
+        project_id: Project ID.
+        document_id: Document ID.
+        user: Target annotator username.
+        file_path: Path to the annotations file.
+        fmt: File format (ctsv3, xmi, conllu, …).
+        state: Annotation state after import (IN_PROGRESS, COMPLETE).
     """
     content = Path(file_path).read_bytes()
     _client().import_annotations(project_id, document_id, user, content, fmt, state)
@@ -305,14 +311,14 @@ def import_annotations(
 
 @mcp.tool()
 def delete_annotations(project_id: int, document_id: int, user: str) -> str:
-    """Supprime toutes les annotations d'un utilisateur sur un document.
+    """Delete all annotations by a user on a document.
 
-    ⚠️ Irréversible.
+    WARNING: Irreversible.
 
     Args:
-        project_id: ID du projet.
-        document_id: ID du document.
-        user: Nom de l'annotateur.
+        project_id: Project ID.
+        document_id: Document ID.
+        user: Annotator username.
     """
     _client().delete_annotations(project_id, document_id, user)
     return f"Annotations de {user} supprimées sur document [{document_id}]."
@@ -329,14 +335,16 @@ def export_curation(
     fmt: str = "ctsv3",
     output_path: str = "",
 ) -> str:
-    """Exporte les annotations curées d'un document.
+    """Export the curated annotations of a document.
 
     Args:
-        project_id: ID du projet.
-        document_id: ID du document.
-        fmt: Format d'export.
-        output_path: Chemin de sauvegarde (optionnel).
+        project_id: Project ID.
+        document_id: Document ID.
+        fmt: Export format.
+        output_path: Save path (optional).
     """
+    if fmt not in EXPORT_FORMATS:
+        return f"Invalid format '{fmt}'. Accepted values: {', '.join(EXPORT_FORMATS)}"
     content = _client().export_curation(project_id, document_id, fmt)
     if output_path:
         Path(output_path).write_bytes(content)
@@ -349,20 +357,20 @@ def export_curation(
 
 @mcp.tool()
 def delete_curation(project_id: int, document_id: int) -> str:
-    """Supprime les annotations curées d'un document.
+    """Delete the curated annotations of a document.
 
-    ⚠️ Irréversible.
+    WARNING: Irreversible.
 
     Args:
-        project_id: ID du projet.
-        document_id: ID du document.
+        project_id: Project ID.
+        document_id: Document ID.
     """
     _client().delete_curation(project_id, document_id)
     return f"Curation supprimée pour document [{document_id}]."
 
 
 # ------------------------------------------------------------------
-# Point d'entrée
+# Entry point
 # ------------------------------------------------------------------
 
 def main():

@@ -45,10 +45,27 @@ class InceptionClient:
         return self._parse(resp)
 
     def _parse(self, resp: requests.Response) -> Any:
+        status = resp.status_code
+        # For 401/403/5xx, the body is often HTML (not JSON): raise a clear error immediately.
+        if status == 401:
+            raise InceptionError(
+                "Authentication failed (401): check INCEPTION_USER and INCEPTION_PASSWORD."
+            )
+        if status == 403:
+            raise InceptionError(
+                "Access forbidden (403): the user does not have permission for this resource."
+            )
+        if status >= 500:
+            raise InceptionError(f"Server error ({status}): {resp.text[:200]}")
+
+        # For all other status codes (including 404), attempt JSON parsing first.
+        # The AERO API returns structured JSON errors even for 4xx responses.
         try:
             data = resp.json()
         except Exception:
-            raise InceptionError(f"Réponse non-JSON ({resp.status_code}): {resp.text[:200]}")
+            if status == 404:
+                raise InceptionError(f"Resource not found (404).")
+            raise InceptionError(f"Non-JSON response ({status}): {resp.text[:200]}")
 
         errors = [m["message"] for m in data.get("messages", []) if m.get("level") == "ERROR"]
         if errors:
@@ -83,7 +100,20 @@ class InceptionClient:
 
     def export_project_zip(self, project_id: int) -> bytes:
         """Exporte le projet complet (documents + annotations + schéma) en ZIP."""
-        return self._get_binary(f"/projects/{project_id}/export.zip")
+        resp = requests.get(
+            f"{self.base}/projects/{project_id}/export.zip",
+            auth=self.auth,
+            timeout=max(self.timeout, 120),
+        )
+        ct = resp.headers.get("Content-Type", "")
+        if "application/json" in ct:
+            data = resp.json()
+            errors = [m["message"] for m in data.get("messages", []) if m.get("level") == "ERROR"]
+            if errors:
+                raise InceptionError("; ".join(errors))
+        if resp.status_code != 200:
+            raise InceptionError(f"Requête échouée ({resp.status_code})")
+        return resp.content
 
     def import_project_zip(self, zip_path: Path) -> dict:
         """Importe un projet depuis un fichier ZIP exporté par INCEpTION."""
