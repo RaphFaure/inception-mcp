@@ -1,9 +1,8 @@
 # inception-mcp
 
-MCP server and CLI for [INCEpTION](https://inception-project.github.io/), the open-source web annotation platform.
+A wrapper around [INCEpTION](https://inception-project.github.io/)'s AERO v1 REST API, exposing corpus management operations as MCP tools and CLI commands.
 
-When used with an MCP-compatible agent such as Claude Code, INCEpTION operations
-can be triggered directly from a conversation:
+**Annotations are always performed by human annotators inside the INCEpTION interface.** This package does not annotate: it handles corpus management tasks (upload, export, monitoring, import) that can be automated or delegated to an agent.
 
 ```
 "Upload all .txt files in gutenberg/processed/ to project 1."
@@ -11,18 +10,18 @@ can be triggered directly from a conversation:
 ```
 
 Exposes INCEpTION's AERO v1 REST API as:
-- **MCP tools** — callable directly from Claude Code or Claude Desktop
+- **MCP tools** — callable from any MCP-compatible agent (Claude Code, Claude Desktop, etc.)
 - **CLI** — standalone terminal interface, no AI agent required
 
-Both share the same underlying `InceptionClient`, ensuring consistent behaviour.
+Both share the same underlying `InceptionClient`.
 
 ### Use cases
 
 | Scenario | How |
 |----------|-----|
-| Corpus upload at scale | Ask Claude to batch-upload hundreds of documents to a project |
-| Annotation pipeline automation | Chain upload → annotate → export in a single Claude conversation |
-| Progress monitoring | Ask Claude to list all documents and their annotation states |
+| Corpus upload at scale | Batch-upload hundreds of documents to a project |
+| Pipeline management | Chain upload → monitor progress → export completed annotations |
+| Progress monitoring | List all documents and their annotation states per user |
 | Export and post-processing | Export ctsv3/XMI annotations and pipe them into a parsing script |
 | Multi-project management | Create, inspect and archive projects without leaving the terminal |
 
@@ -58,20 +57,15 @@ Supported export formats: `ctsv3`, `xmi`, `xmi-struct`, `conllu`, `conll2003`, `
 
 ## Enabling the INCEpTION REST API
 
-The AERO v1 REST API is **disabled by default** in INCEpTION. You must enable it once before using this package.
+The AERO v1 REST API must be enabled before using this package. Refer to the [official INCEpTION documentation](https://inception-project.github.io/documentation/) for instructions.
 
-1. Log in to INCEpTION as an administrator.
-2. Go to **Administration → Settings** (top-right menu).
-3. Under the **API** tab, check **Enable REST API**.
-4. Click **Save**.
-
-The API is now reachable at `http://<host>:<port>/api/aero/v1`. You can verify it by opening the Swagger UI:
+Once enabled, the API is reachable at `http://<host>:<port>/api/aero/v1`. The Swagger UI is available at:
 
 ```
-http://localhost:8080/swagger-ui.html
+http://<host>:<port>/swagger-ui.html
 ```
 
-> **Note on authentication**: the REST API uses HTTP Basic Auth. Use the same username and password as your INCEpTION login. Creating a dedicated user with limited permissions (e.g. Project Manager role only) is recommended for production use.
+Authentication uses HTTP Basic Auth with your INCEpTION credentials.
 
 ---
 

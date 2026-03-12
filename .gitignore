@@ -11,3 +11,6 @@ dist/
 
 # LaTeX
 *.tex
+
+# Internal reviews
+REVIEW.md
